@@ -1,6 +1,6 @@
 <h1 align="center">模拟炒股</h1>
     <div align="center">
-        <a>
+        <a href="https://github.com/ChavapaWLF/Simulated-stock-trading" target="_blank">
             <img src="https://img.shields.io/badge/Version-1.0.0-00CC00">
         </a>
         <a href="https://t.me/chavapawlf" target="_blank">
@@ -9,11 +9,14 @@
         <a href="https://github.com/ChavapaWLF" target="_blank">
             <img src="https://img.shields.io/badge/Github-ChavapaWLF-FC6D26?logo=github">
         </a>
-        <a>
+        <a href="https://github.com/ChavapaWLF/Simulated-stock-trading" target="_blank">
             <img src="https://img.shields.io/badge/QQ-3404420230-1EBAFC?logo=tencentqq">
         </a>
-        <a>
+        <a href="https://github.com/ChavapaWLF/Simulated-stock-trading/blob/main/LICENSE" target="_blank">
             <img src="https://img.shields.io/badge/license-MIT-FF0000">
+        </a>
+        <a href="https://github.com/ChavapaWLF/Simulated-stock-trading" target="_blank">
+            <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FChavapaWLF%2FSimulated-stock-trading&count_bg=%23CE2EE1&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false"/>
         </a>
     </div>
     <div align="center">
