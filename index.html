@@ -843,6 +843,7 @@
 
         var modal = document.getElementById("myModal"); // 获取弹窗元素        
         var span = document.getElementsByClassName("close")[0]; // 获取 <span> 元素，关闭弹窗
+        var companyName;
         // 页面加载完成后打开弹窗        
         window.onload = function () {
             modal.style.display = "block";
@@ -850,7 +851,7 @@
         // 当点击开始游戏, 关闭弹窗
         span.onclick = function () {
             modal.style.display = "none";
-            var companyName = prompt("请自定义您的股票名称：", "XXXX");
+            companyName = prompt("请自定义您的股票名称：", "XXXX");
             let welcome = "XXXX于近日在上交所正式挂牌上市，上市股票发行价格为249元/股，净募集资金约4.925亿人民币。";
             AddNews(welcome.replace("XXXX", "<span class='company-name'>" + companyName + "</span>"));
             var updateInterval = setInterval(delayIncr, delayTime);
@@ -859,7 +860,7 @@
         window.onclick = function (event) {
             if (event.target == modal) {
                 modal.style.display = "none";
-                var companyName = prompt("请自定义您的股票名称：", "XXXX");
+                companyName = prompt("请自定义您的股票名称：", "XXXX");
                 let welcome = "XXXX于近日在上交所正式挂牌上市，上市股票发行价格为249元/股，净募集资金约4.925亿人民币。";
                 AddNews(welcome.replace("XXXX", "<span class='company-name'>" + companyName + "</span>"));
                 var updateInterval = setInterval(delayIncr, delayTime);
