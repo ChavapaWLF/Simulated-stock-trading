@@ -1,4 +1,4 @@
-<p style="font-size: 26px; font-weight: bold" align="center">模拟炒股</p>
+<h1 align="center">模拟炒股</h1>
     <div align="center">
         <a>
             <img src="https://img.shields.io/badge/Version-1.0.0-00CC00">
