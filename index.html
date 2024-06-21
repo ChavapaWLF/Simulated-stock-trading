@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模拟炒股</title>
+    <meta name="author" content="Chavapa">
+    <meta name="description" content="A dynamic webpage for simulating real-time stock trading">
+    <!--
+    MIT License
+
+    Copyright (c) [2024] [ChavapaWLF]
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+    -->
+    <!--
+        本项目具有的创造性：
+            1.通过动态网页生成走势图模拟股票交易，为入门投资者掌握股票交易基本规则提供契机的同时，也兼具趣味性与娱乐性；
+            2.采用严谨的数学计算生成股票数据（例如计算正态分布的Box-Muller方法），尽最大限度还原真实股市；
+            3.提供多种游戏模式，支持灵活切换，操作简单便捷。
+    -->
+    <p style="font-size: 26px; font-weight: bold" align="center">模拟炒股</p>
+    <div align="center">
+        <a href="https://github.com/ChavapaWLF/Simulated-stock-trading" target="_blank">
+            <img src="https://img.shields.io/badge/Version-1.0.0-00CC00">
+        </a>
+        <a href="https://t.me/chavapawlf" target="_blank">
+            <img src="https://img.shields.io/badge/Telegram-chavapawlf-26A5E4?logo=Telegram">
+        </a>
+        <a href="https://github.com/ChavapaWLF" target="_blank">
+            <img src="https://img.shields.io/badge/Github-ChavapaWLF-FC6D26?logo=github">
+        </a>
+        <a href="https://github.com/ChavapaWLF/Simulated-stock-trading" target="_blank">
+            <img src="https://img.shields.io/badge/QQ-3404420230-1EBAFC?logo=tencentqq">
+        </a>
+        <a href="https://github.com/ChavapaWLF/Simulated-stock-trading/blob/main/LICENSE" target="_blank">
+            <img src="https://img.shields.io/badge/license-MIT-FF0000">
+        </a>
+        <a href="https://github.com/ChavapaWLF/Simulated-stock-trading" target="_blank">
+            <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FChavapaWLF%2FSimulated-stock-trading&count_bg=%23CE2EE1&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false"/>
+        </a>
+    </div>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+        }
+
+        /* 弹窗的样式 */
+        .modal {
+            display: none;
+            /* 默认隐藏 */
+            position: fixed;
+            /* 固定位置 */
+            z-index: 1;
+            /* 位于顶部 */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            /* 启用滚动 */
+            background: linear-gradient(to bottom right, #4CAF50, #2196F3);
+            /* 渐变背景色 */
+        }
+
+        /* 弹窗内容的样式 */
+        .modal-content {
+            background-color: #fefefe;
+            margin: 2% auto;
+            padding: 20px;
+            border: 1px solid transparent;
+            /* 透明边框 */
+            border-radius: 10px;
+            /* 圆角边框 */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            /* 阴影效果 */
+            border-image: repeating-linear-gradient(45deg, transparent, transparent 10px, #888 10px, #888 20px);
+            /* 边框图案 */
+            width: 80%;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .rules-container {
+            position: fixed;
+            top: 90px;
+            left: 40px;
+            width: 22%;
+            max-height: 27vh;
+            /* 设置最大高度不超过页面高度的四分之一 */
+            overflow-y: auto;
+            /* 添加垂直滚动条 */
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #news-container {
+            position: fixed;
+            top: 90px;
+            right: 40px;
+            width: 22%;
+            max-height: 27vh;
+            /* 设置最大高度不超过页面高度的四分之一 */
+            overflow-y: auto;
+            /* 添加垂直滚动条 */
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .news-item {
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+            color: #333;
+        }
+
+        .company-name {
+            color: blue;
+        }
+
+        #operations {
+            border: 2px solid #ccc;
+            background-color: #ffffff;
+            padding: 10px;
+            width: 45%;
+            margin: auto;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        #operations p {
+            margin: 5px 0;
+            white-space: nowrap;
+        }
+
+        #buyButton,
+        #sellButton {
+            font-size: 16px;
+            padding: 8px 16px;
+            background-color: #eaef56;
+            color: #000000;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+
+        #fullBuyButton,
+        #fullSellButton {
+            font-size: 16px;
+            padding: 8px 16px;
+            background-color: #3399FF;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+
+        #buyButton:hover,
+        #sellButton:hover {
+            background-color: #809520;
+        }
+
+        #fullBuyButton:hover,
+        #fullSellButton:hover {
+            background-color: #052c96;
+        }
+
+        #capital,
+        #price,
+        #holding,
+        #holdingValue,
+        #buyprice,
+        #sellprice,
+        #totalProfitLoss {
+            font-size: 20px;
+            font-weight: bold;
+            display: inline-block;
+            /* 确保上下对齐 */
+            vertical-align: top;
+            /* 垂直对齐顶部 */
+            white-space: nowrap;
+        }
+
+        #wiener_process_container {
+            text-align: center;
+        }
+
+        #wiener_process {
+            margin: auto;
+        }
+
+        .thanks {
+            font-size: 0.8em;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 初始弹窗 -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close">Start now!</span>
+            <p style="font-size: 26px; font-weight: bold" align="center">README</p>
+            <div align="center">
+                <a href="https://github.com/ChavapaWLF/Simulated-stock-trading" target="_blank">
+                    <img src="https://img.shields.io/badge/Version-1.0.0-00CC00">
+                </a>
+                <a href="https://t.me/chavapawlf" target="_blank">
+                    <img src="https://img.shields.io/badge/Telegram-chavapawlf-26A5E4?logo=Telegram">
+                </a>
+                <a href="https://github.com/ChavapaWLF" target="_blank">
+                    <img src="https://img.shields.io/badge/Github-ChavapaWLF-FC6D26?logo=github">
+                </a>
+                <a href="https://github.com/ChavapaWLF/Simulated-stock-trading" target="_blank">
+                    <img src="https://img.shields.io/badge/QQ-3404420230-1EBAFC?logo=tencentqq">
+                </a>
+                <a href="https://github.com/ChavapaWLF/Simulated-stock-trading/blob/main/LICENSE" target="_blank">
+                    <img src="https://img.shields.io/badge/license-MIT-FF0000">
+                </a>
+                <a href="https://github.com/ChavapaWLF/Simulated-stock-trading" target="_blank">
+                    <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FChavapaWLF%2FSimulated-stock-trading&count_bg=%23CE2EE1&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false"/>
+                </a>
+            </div>
+            <div align="center">
+                <img src="https://s21.ax1x.com/2024/06/21/pkDUNrt.md.jpg" alt="“A股是全世界最大的知识付费平台”" title="ChatHistory"
+                    width="350">
+            </div>
+            <h3 id="简介">简介 </h3>
+            <p>欢迎来到<s>全世界最大的</s>模拟知识付费平台（bushi）。</p>
+            <p>你将拥有由 UCASer 自主研发的一只开放价格冒险股票。股票在一个被称作 <strong>「A股」</strong> 的幻想市场上流通，在这里，被机构选中的题材将被授予
+                <strong>「涨停板」</strong>，引导资金抱团。你将扮演一位名为 <strong>「韭菜」</strong>
+                的神秘角色，在剧烈的主升浪中邂逅精神失常、频繁操作的散户们，和他们一起被主力收割，见证连板的秘密——同时，逐步发掘 <strong>「A股」</strong> 的历史低点。
+            </p>
+            <p><em><s>注：以上为虚构背景，如与现实雷同纯属巧合。</s></em></p>
+            <h3 id="操作说明">操作说明 </h3>
+            <p>本模拟器<code>1.0.0</code>版本支持三种游戏模式：</p>
+            <ul>
+                <li>
+                    <p><strong>新手模式</strong>：股票波动较小，波动值符合正态分布，无市场因素影响，单日涨跌幅限制为5%，适合从未接触过股市的初级投资者</p>
+                </li>
+                <li>
+                    <p><strong>进阶模式</strong>：贴近实战，股票波动较大，波动值易受市场因素和宏观政策影响，单日涨跌幅限制为10%，适合对实盘有一定经验的投资者</p>
+                </li>
+                <li>
+                    <p><strong>末日模式</strong>：股票波动极大，易受市场极端情绪影响出现暴涨和暴跌，无单日涨跌幅限制</p>
+                </li>
+            </ul>
+            <p>主页面下方将会显示实时<a href="https://zh.wikipedia.org/wiki/K%E7%BA%BF"
+                    target="_blank">日K线图</a>，在操作面板中输入相应份额进行“买入”或“卖出”操作即可（或直接点击“全仓买入”“全仓卖出”）。
+            </p>
+            <h3 id="机制说明">机制说明 </h3>
+            <p>在本模拟器的 <strong>新手模式</strong> 中，每日波动值依据 <em>Box-Muller</em> 方法随机生成，符合正态分布；而在 <strong>进阶模式</strong> 和
+                <strong>末日模式</strong> 中，股价将受随机生成的新闻事件影响而出现异常波动。
+            </p>
+            <p>若股价超过连续20个交易日低于一元，股票将会被<strong>强制退市</strong>，游戏结束。</p>
+            <div align="center"><b style="color:red">ʚ 点击右上角以开始 ɞ</b></div>
+        </div>
+    </div>
+    <div class="rules-container">
+        <p style="font-size: 18px; font-weight: bold">规则介绍</p>
+        <p style="font-size: 14px">1. <b>新手模式</b>：股票波动较小，波动值符合正态分布，无市场因素影响，单日涨跌幅限制为5%，适合从未接触过股市的初级投资者</p>
+        <p style="font-size: 14px">2. <b>进阶模式</b>：贴近实战，股票波动较大，波动值易受市场因素和宏观政策影响，单日涨跌幅限制为10%，适合对实盘有一定经验的投资者</p>
+        <p style="font-size: 14px">3. <b>末日模式</b>：股票波动极大，易受市场极端情绪影响出现暴涨和暴跌，无单日涨跌幅限制，仅供娱乐</p>
+    </div>
+    <div id="news-container">
+        <p style="font-size: 18px; font-weight: bold">资讯速递</p>
+        <div id="news-list"></div>
+    </div>
+    <div id="operations">
+        <div id="buyArea">
+            <label for="buyAmount">买入份额数：</label>
+            <input type="number" id="buyAmount" min="0" value="1">
+            <button id="buyButton" onclick="buy()">买入</button>
+            <button id="fullBuyButton" onclick="buyFull()">全仓买入</button>
+        </div>
+        <div id="sellArea">
+            <label for="sellAmount">卖出份额数：</label>
+            <input type="number" id="sellAmount" min="0" value="1">
+            <button id="sellButton" onclick="sell()">卖出</button>
+            <button id="fullSellButton" onclick="sellFull()">全仓卖出</button>
+        </div>
+        <p id="capital">资本：<span id="value">10000</span></p>
+        <p>实时持有份额：<span id="holding">0</span> 实时持有总市值：<span id="holdingValue">0</span></p>
+        <p>上一次买入价格：<span id="buyprice"></span> 上一次卖出价格：<span id="sellprice"></span></p>
+        <p>实时价格：<span id="price"></span></p>
+        <p style="font-size: 18px">实时总盈亏：<span id="totalProfitLoss">0</span></p>
+        <div id="modeSelection">
+            <label for="mode">模式选择：</label>
+            <select id="mode" onchange="changeMode()">
+                <option value="beginner">新手模式</option>
+                <option value="advanced">进阶模式</option>
+                <option value="doomsday">末日模式</option>
+            </select>
+        </div>
+    </div>
+    <div id="wiener_process_container">
+        <canvas id="wiener_process" width="1200" height="500"></canvas>
+    </div>
+    <div class="thanks" align="center">
+        感谢github项目<a href="https://github.com/az13js/stock-simulator" target="_blank">stock-simulator</a>提供的灵感、<a href="https://shields.io/" target="_blank">Shields.io</a>提供的徽标支持以及Wikipedia关于<a href="https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform" target="_blank">Box-Muller</a>方法的介绍
+    </div>
+    <script>
+        var newsHeadlines = [
+            "XXXX发布新款智能手表，市场反应热烈，股价上升。",
+            "XXXX季度利润超预期，股价大涨。",
+            "XXXX宣布进军新能源市场，股价上涨。",
+            "XXXX收购一家初创公司，扩展业务领域，股价上升。",
+            "XXXX推出全新电动车型，订单量激增，股价上涨。",
+            "XXXX研发的新药通过临床试验，股价飙升。",
+            "XXXX公布新的战略合作伙伴关系，股价上升。",
+            "XXXX在国际市场取得重大突破，股价上涨。",
+            "XXXX科技大会展示最新AI技术，股价上扬。",
+            "XXXX宣布股票回购计划，股价上涨。",
+            "XXXX季度营收创新高，股价上升。",
+            "XXXX的旗舰产品销量超预期，股价上涨。",
+            "XXXX获得大型订单合同，股价大涨。",
+            "XXXX与某知名品牌达成合作，股价上涨。",
+            "XXXX环保项目获政府支持，股价上涨。",
+            "XXXX推出新一代芯片，性能领先，股价上涨。",
+            "XXXX的移动支付业务增长迅猛，股价上涨。",
+            "XXXX宣布进入医疗器械市场，股价上涨。",
+            "XXXX与国际大厂达成供应协议，股价上涨。",
+            "XXXX高层管理团队变动，市场看好，股价上升。",
+            "XXXX的虚拟现实产品热销，股价上涨。",
+            "XXXX在海外市场扩展迅速，股价上涨。",
+            "XXXX的数据中心业务增长强劲，股价上涨。",
+            "XXXX新推出的智能家居产品受欢迎，股价上涨。",
+            "XXXX合作开发的疫苗上市，股价飙升。",
+            "XXXX的自动驾驶技术获批，股价上涨。",
+            "XXXX宣布进军无人机市场，股价上涨。",
+            "XXXX的云服务业务大幅增长，股价上涨。",
+            "XXXX的电商平台用户数突破新高，股价上涨。",
+            "XXXX的物流网络扩展计划获批，股价上涨。",
+            "XXXX发布财报，盈利超预期，股价上升。",
+            "XXXX宣布与某大学合作研发新技术，股价上涨。",
+            "XXXX的再生能源项目获政府资助，股价上涨。",
+            "XXXX的5G技术升级成功，市场看好，股价上涨。",
+            "XXXX与国际基金签署投资协议，股价上涨。",
+            "XXXX的移动应用下载量创新高，股价上涨。",
+            "XXXX的游戏部门表现亮眼，股价上涨。",
+            "XXXX的金融服务业务扩展，股价上涨。",
+            "XXXX的智能交通系统获奖，股价上涨。",
+            "XXXX发布新型电池技术，股价飙升。",
+            "XXXX宣布与某知名制造商合作，股价上涨。",
+            "XXXX的在线教育平台用户激增，股价上涨。",
+            "XXXX的健康科技产品受市场青睐，股价上涨。",
+            "XXXX的环保材料项目获批，股价上涨。",
+            "XXXX的全球化战略进展顺利，股价上涨。",
+            "XXXX的社交媒体平台用户粘性增加，股价上涨。",
+            "XXXX的区块链技术应用前景广阔，股价上涨。",
+            "XXXX的智能穿戴设备销售火爆，股价上涨。",
+            "XXXX的生物科技研究取得突破，股价飙升。",
+            "XXXX的国际市场营销策略奏效，股价上涨。",
+            "XXXX季度利润大幅缩水，股价暴跌。",
+            "XXXX遭遇重大网络攻击，客户数据泄露，股价下跌。",
+            "XXXX高层管理人员涉嫌财务欺诈，股价下挫。",
+            "XXXX主要产品被曝质量问题，股价下降。",
+            "XXXX与重要合作伙伴终止合作关系，股价下跌。",
+            "XXXX面临大规模诉讼，股价下滑。",
+            "XXXX发布业绩预警，预计亏损扩大，股价暴跌。",
+            "XXXX的旗舰产品需求疲软，股价下跌。",
+            "XXXX裁员计划曝光，市场反应负面，股价下降。",
+            "XXXX的海外市场扩展遇阻，股价下跌。",
+            "XXXX的研发项目失败，股价暴跌。",
+            "XXXX公司内部爆发管理层纠纷，股价下滑。",
+            "XXXX的环保项目被叫停，股价下跌。",
+            "XXXX的供应链中断，生产受影响，股价下降。",
+            "XXXX的竞争对手推出更具竞争力产品，股价下跌。",
+            "XXXX的品牌形象受损，客户流失，股价下降。",
+            "XXXX的市场份额持续萎缩，股价下跌。",
+            "XXXX的金融报表出现严重错误，股价暴跌。",
+            "XXXX的国际分支机构遭遇法律挑战，股价下滑。",
+            "XXXX的债务问题加剧，投资者信心下降，股价下跌。",
+            "XXXX的并购计划失败，股价下降。",
+            "XXXX的技术被指侵犯专利，面临巨额赔偿，股价下跌。",
+            "XXXX融资遇阻，公司发展受限，股价下滑。",
+            "XXXX的生产成本攀升，利润空间被压缩，股价下降。",
+            "XXXX的市场监管调查结果不利，股价下跌。",
+            "XXXX的核心业务收入锐减，股价暴跌。",
+            "XXXX的高管集体辞职，市场信心受挫，股价下滑。",
+            "XXXX的创新产品未能通过审批，股价下降。",
+            "XXXX的工厂发生重大事故，生产暂停，股价下跌。",
+            "XXXX的财务报表不合规，遭到处罚，股价下降。",
+            "XXXX的技术研发滞后，市场竞争力下降，股价下降。",
+            "XXXX的销售渠道遭遇障碍，股价下滑。",
+            "XXXX的主力市场需求疲软，股价下降。",
+            "XXXX的客户投诉增多，服务质量问题突出，股价下跌。",
+            "XXXX的资产重组计划受挫，股价下滑。",
+            "XXXX的国际贸易争端升级，业务受影响，股价下降。",
+            "XXXX的市场推广策略失误，销售不佳，股价下跌。",
+            "XXXX的法律合规问题频出，股价下滑。",
+            "XXXX的财务状况恶化，评级被下调，股价暴跌。",
+            "XXXX的客户退货率提高，股价下降。",
+            "XXXX的投资项目亏损严重，股价下滑。",
+            "XXXX的市场情报被竞争对手窃取，股价下跌。",
+            "XXXX的技术更新缓慢，市场份额被侵蚀，股价下滑。",
+            "XXXX的国际业务增长放缓，股价下降。",
+            "XXXX的内部审计发现重大漏洞，股价下跌。",
+            "XXXX的并购谈判破裂，战略受阻，股价下滑。",
+            "XXXX的环保违规导致罚款，股价下降。",
+            "XXXX的市场推广费用增加，盈利能力下降，股价下跌。",
+            "XXXX的产品召回事件频发，股价下滑。",
+            "XXXX的企业文化丑闻曝光，员工士气低落，股价下跌。",
+            "中美贸易谈判取得进展，全球股市应声上涨。",
+            "中国GDP增速超预期，A股市场全面反弹。",
+            "美联储于近日宣布维持利率不变。",
+            "比特币价格突破65000美元，创下新纪录。",
+            "阿里巴巴公布财报，季度收入超预期。",
+            "印度经济复苏强劲。",
+            "石油价格回升至每桶75美元，能源股走强。",
+            "日本央行维持负利率政策，日经指数微涨。",
+            "摩根大通预测全球经济增长将达4%，股市应声上涨。",
+            "中国出口数据强劲，带动亚太股市上涨。",
+            "美国就业数据超预期，道琼斯指数上涨300点。",
+            "欧佩克决定维持产量，全球油价稳定。",
+            "沃尔玛扩大电商业务，季度利润超预期。",
+            "美股科技股集体反弹，纳斯达克指数回弹1.8%。",
+            "通用汽车进军电动车市场。",
+            "英国脱欧谈判取得进展，英镑汇率提高。",
+            "中国央行降准，释放流动性，推动市场回暖，XXXX股价上升。",
+            "谷歌母公司Alphabet宣布股票回购计划。",
+            "全球房地产市场回暖，相关股票走强。",
+            "印度卢比兑美元汇率上升，经济前景乐观。",
+            "石油巨头埃克森美孚宣布新油田发现。",
+            "美联储加息预期升温，银行股上涨。",
+            "初创公司XXXX获巨额融资，市场看好其前景。",
+            "全球股市暴跌，投资者恐慌情绪加剧。",
+            "美国经济增速放缓，失业率升至年内新高。",
+            "欧元区企业倒闭潮，银行不良贷款急剧攀升。",
+            "亚洲主要出口国出口下滑，制造业订单锐减。",
+            "中国房地产泡沫破裂，包括XXXX在内的多家企业面临破产风险，股价暴跌。",
+            "日本股市连续下跌，央行介入干预市场。",
+            "澳大利亚矿业巨头财报亏损，股价暴跌，XXXX受影响出现巨大波动。",
+            "韩国工业生产大幅下滑，经济增长放缓。",
+            "印度金融市场动荡，货币贬值加剧通货膨胀，XXXX股价下降。",
+            "新兴市场货币汇率崩盘，资本外流加速，XXXX股价暴跌。"
+        ];
+        const canvaswidth = 1200;
+        const canvasheight = 500;
+
+        // 模式初始化
+        let mode = 'beginner';
+        let stdDeviation = 0.005; // 默认波动率0.5%
+        let dailyFluctuationLimit = 0.05; // 新手模式波动幅度限制5%
+
+        // 模式切换
+        function changeMode() {
+            mode = document.getElementById("mode").value;
+            switch (mode) {
+                case 'beginner':
+                    stdDeviation = 0.005;
+                    dailyFluctuationLimit = 0.05;
+                    break;
+                case 'advanced':
+                    stdDeviation = 0.02;
+                    dailyFluctuationLimit = 0.1;
+                    break;
+                case 'doomsday':
+                    stdDeviation = 0.05;
+                    dailyFluctuationLimit = Infinity; // 无涨跌幅限制
+                    break;
+                default:
+                    stdDeviation = 0.005;
+                    dailyFluctuationLimit = 0.05;
+            }
+        }
+
+        // 正态分布函数
+        function normalDistribution(mean, standardDeviation) {
+            // 采用 Box-Muller 方法生成符合正态分布的数据点，均值为 mean，偏移量为 standardDeviation
+            let U1 = 1 - Math.random();
+            let U2 = 1 - Math.random();
+            let R = Math.sqrt(-2 * Math.log(U2));
+            let THETA = 2 * Math.PI * U1;
+            let Z = R * Math.cos(THETA);
+            return mean + (Z * standardDeviation);
+        }
+
+        // 检测股价是否处于异常范围
+        function checkDelisting(sequence) {
+            let lastClose = sequence[sequence.length - 1][1];
+            let beforeClose = sequence[sequence.length - 2][1];
+            if (lastClose > 500) {
+                let r = Math.random();
+                if (r < 0.005) {
+                    AbnormalfluctuationDays = 2;
+                    Abnormalfluctuation = 0.7;
+                    let warning = "北向资金大幅流出A股市场，XXXX股价出现剧烈波动。";
+                    AddNews(warning.replace("XXXX", "<span class='company-name'>" + companyName + "</span>"));
+                }
+                if (beforeClose <= 500) {
+                    let warning = "【风险提示】XXXX股价已上升至高位，请警惕高位风险。";
+                    AddNews(warning.replace("XXXX", "<span class='company-name'>" + companyName + "</span>"));
+                }
+            }
+            if (lastClose < 50) {
+                let r = Math.random();
+                if (r < 0.005) {
+                    AbnormalfluctuationDays = 2;
+                    Abnormalfluctuation = 1.5;
+                    let warning = "北向资金大幅流入A股市场，XXXX股价出现剧烈波动。";
+                    AddNews(warning.replace("XXXX", "<span class='company-name'>" + companyName + "</span>"));
+                }
+                if (beforeClose >= 50) {
+                    let warning = "【风险提示】XXXX股价已下行至低位，请警惕持续下行风险。";
+                    AddNews(warning.replace("XXXX", "<span class='company-name'>" + companyName + "</span>"));
+                }
+            }
+            if (beforeClose >= 20 && lastClose < 20) {
+                let warning = "【风险提示】XXXX股价已跌破 20 元，请注意持仓风险。";
+                AddNews(warning.replace("XXXX", "<span class='company-name'>" + companyName + "</span>"));
+            }
+            if (beforeClose >= 10 && lastClose < 10) {
+                let warning = "【风险提示】XXXX股价已跌破 10 元，请注意持仓风险。";
+                AddNews(warning.replace("XXXX", "<span class='company-name'>" + companyName + "</span>"));
+            }
+            if (beforeClose >= 1 && lastClose < 1) {
+                let warning = "【风险提示】XXXX股价已跌破 1 元。超过连续 20 个交易日股价低于一元时，将被强制退市。";
+                AddNews(warning.replace("XXXX", "<span class='company-name'>" + companyName + "</span>"));
+            }
+            for (let i = sequence.length - 1; i >= sequence.length - 20; i--) {
+                if (sequence[i][1] >= 1) {
+                    return;
+                }
+            }
+            alert("由于股价连续 20 个交易日保持在一元以下，该股已被强制退市，游戏结束！");
+            clearInterval(updateInterval);
+        }
+
+        // 更新消息框
+        function AddNews(headline) {
+            var newsItem = document.createElement("div");
+            newsItem.classList.add("news-item");
+            newsItem.innerHTML = headline;
+
+            // 在消息框顶部插入新消息
+            var newsList = document.getElementById("news-list");
+            newsList.insertBefore(newsItem, newsList.firstChild);
+
+            // 限制总消息数为10
+            if (newsList.children.length > 10) {
+                newsList.removeChild(newsList.lastChild);
+            }
+        }
+
+        // 随机生成新闻事件
+        function updateNews() {
+            var randomIndex = Math.floor(Math.random() * newsHeadlines.length);
+            var headline = newsHeadlines[randomIndex].replace("XXXX", "<span class='company-name'>" + companyName + "</span>");
+
+            AbnormalfluctuationDays = Math.max(2, Math.floor(normalDistribution(5, 3)));
+            setTimeout(AddNews(headline), Math.min(AbnormalfluctuationDays, 5) * 1000); // 新闻滞后显示，避免“预测未来”的bug       
+
+            if (headline.includes("上升") || headline.includes("上涨") || headline.includes("上扬") || headline.includes("反弹")) {
+                Abnormalfluctuation = 1 + stdDeviation;
+            } else if (headline.includes("大涨") || headline.includes("飙升")) {
+                Abnormalfluctuation = 1 + stdDeviation * 3;
+            } else if (headline.includes("下跌") || headline.includes("下挫") || headline.includes("下滑") || headline.includes("下降")) {
+                Abnormalfluctuation = 1 - stdDeviation;
+            } else if (headline.includes("暴跌")) {
+                Abnormalfluctuation = 1 - stdDeviation * 3;
+            } else {
+                Abnormalfluctuation = 1;
+            }
+        }
+
+        // 绘制K线图
+        function drawCandlestickChart(element, context2d, width, height, arrayDraw) {
+            let dx = width / arrayDraw.length;
+            let max = Math.max(...arrayDraw.map(data => Math.max(...data)));
+            let min = Math.min(...arrayDraw.map(data => Math.min(...data)));
+            let hei = max - min;
+            element.width = element.width;
+            context2d.lineWidth = 1;
+            context2d.beginPath();
+            context2d.strokeStyle = "#ddd";
+            for (let i = 0; i <= 10; i++) {
+                let y = (canvasheight / 10) * i;
+                context2d.moveTo(0, y);
+                context2d.lineTo(canvaswidth, y);
+                context2d.fillStyle = "#000";
+                context2d.fillText(((10 - i) * hei / 10 + min).toFixed(2), 0, y);
+            }
+            context2d.stroke();
+            for (let i = 0; i < arrayDraw.length; i++) {
+                let x = i * dx;
+                let open = arrayDraw[i][0];
+                let close = arrayDraw[i][1];
+                let high = arrayDraw[i][2];
+                let low = arrayDraw[i][3];
+                let color = close >= open ? "#FF0000" : "#009900";
+                context2d.fillStyle = color;
+                context2d.fillRect(x + dx * 0.3, height * (1 - (Math.max(open, close) - min) / hei), dx * 0.4, (Math.abs(open - close) / hei) * height);
+                context2d.beginPath();
+                context2d.strokeStyle = color;
+                context2d.moveTo(x + dx * 0.5, height * (1 - (high - min) / hei));
+                context2d.lineTo(x + dx * 0.5, height * (1 - (low - min) / hei));
+                context2d.stroke();
+            }
+        }
+
+        // 初始化走势图数据
+        let points = 60;
+        var delayTime = 1000;
+        var generate = 1;
+        var sequence = [[249, 251, 254, 247]];
+        for (let i = 1; i < points; i++) {
+            let open = sequence[sequence.length - 1][1];
+            let close = normalDistribution(open, stdDeviation * open);
+            let dailyChangePercentage = (close - open) / open;
+            // 根据模式选择控制单日波动幅度
+            if (Math.abs(dailyChangePercentage) > dailyFluctuationLimit) {
+                if (dailyChangePercentage > 0) {
+                    close = open * (1 + dailyFluctuationLimit);
+                } else {
+                    close = open * (1 - dailyFluctuationLimit);
+                }
+            }
+            //生成当日最高和最低股价
+            let high = Math.max(Math.max(open, close) + normalDistribution(0, 0.5 * stdDeviation * open), Math.max(open, close));
+            let low = Math.min(Math.min(open, close) - normalDistribution(0, 0.5 * stdDeviation * open), Math.min(open, close));
+            sequence.push([open, close, high, low]);
+        }
+        var element = document.getElementById("wiener_process");
+        var context2d = element.getContext("2d");
+        var buyPriceElement = document.getElementById("buyprice");
+        var sellPriceElement = document.getElementById("sellprice");
+        var priceElement = document.getElementById("price");
+        var valueElement = document.getElementById("value");
+        var holdingElement = document.getElementById("holding");
+        var holdingValueElement = document.getElementById("holdingValue");
+        var totalProfitLossElement = document.getElementById("totalProfitLoss");
+        //设定随机事件影响导致的股价异动平均幅度和天数
+        var Abnormalfluctuation = 1;
+        var AbnormalfluctuationDays = 0;
+
+        priceElement.innerText = sequence[sequence.length - 1][1].toFixed(2);
+        holdingElement.innerText = "0";
+        holdingValueElement.innerText = "0";
+        totalProfitLossElement.innerText = "0";
+
+        function buy() {
+            let buyAmount = parseInt(document.getElementById("buyAmount").value);
+            if (isNaN(buyAmount) || buyAmount <= 0) {
+                alert("请输入有效的买入份额数");
+                return;
+            }
+            let price = parseFloat(priceElement.innerText);
+            let totalCost = buyAmount * price;
+            let currentValue = parseFloat(valueElement.innerText);
+            if (currentValue < totalCost) {
+                alert("资本不足");
+                return;
+            }
+            let holding = parseInt(holdingElement.innerText);
+            let holdingValue = price * holding;
+            mode = document.getElementById("mode").value;
+            if ((mode == 'doomsday') && (totalCost / (holdingValue + currentValue) > 0.5)) {
+                AbnormalfluctuationDays = Math.floor(normalDistribution(15, 5));
+                let r = Math.random();
+                if (r < 0.15) {
+                    Abnormalfluctuation = 1.03 + normalDistribution(0, 0.01);
+                } else if (0.15 <= r && r < 0.35) {
+                    Abnormalfluctuation = 0.97 + normalDistribution(0, 0.01);
+                } else {
+                    Abnormalfluctuation = 1;
+                }
+            }
+            valueElement.innerText = (currentValue - totalCost).toFixed(2);
+            holdingElement.innerText = (holding + buyAmount).toFixed(2);
+            buyPriceElement.innerText = (price).toFixed(2);
+            updateHoldingValue();
+        }
+
+        function sell() {
+            let sellAmount = parseInt(document.getElementById("sellAmount").value);
+            if (isNaN(sellAmount) || sellAmount <= 0) {
+                alert("请输入有效的卖出份额数");
+                return;
+            }
+            let price = parseFloat(priceElement.innerText);
+            let totalGain = sellAmount * price;
+            let currentValue = parseFloat(valueElement.innerText);
+            let holding = parseInt(holdingElement.innerText);
+            let holdingValue = price * holding;
+            if (holding < sellAmount) {
+                alert("持有份额不足");
+                return;
+            }
+            mode = document.getElementById("mode").value;
+            if ((mode == 'doomsday') && (totalGain / (holdingValue + currentValue) > 0.5)) {
+                AbnormalfluctuationDays = Math.floor(normalDistribution(15, 5));
+                let r = Math.random();
+                if (r < 0.2) {
+                    Abnormalfluctuation = 1.03 + normalDistribution(0, 0.01);
+                } else if (0.2 <= r && r < 0.35) {
+                    Abnormalfluctuation = 0.97 + normalDistribution(0, 0.01);
+                } else {
+                    Abnormalfluctuation = 1;
+                }
+            }
+            valueElement.innerText = (currentValue + totalGain).toFixed(2);
+            holdingElement.innerText = (holding - sellAmount).toFixed(2);
+            sellPriceElement.innerText = (price).toFixed(2);
+            updateHoldingValue();
+        }
+
+        function buyFull() {
+            let price = parseFloat(priceElement.innerText);
+            let availableCapital = parseFloat(valueElement.innerText);
+            let maxBuyAmount = Math.floor(availableCapital / price);
+            document.getElementById("buyAmount").value = maxBuyAmount;
+            buy();
+        }
+
+        function sellFull() {
+            let holding = parseInt(holdingElement.innerText);
+            document.getElementById("sellAmount").value = holding;
+            sell();
+        }
+
+        let buyAmountInput = document.getElementById("buyAmount");
+        let sellAmountInput = document.getElementById("sellAmount");
+
+        function updateHoldingValue() {
+            let price = parseFloat(priceElement.innerText);
+            let holding = parseInt(holdingElement.innerText);
+            let holdingValue = (price * holding).toFixed(2);
+            let totalValue = parseFloat(valueElement.innerText) + parseFloat(holdingValue);
+            holdingValueElement.innerText = holdingValue;
+            updateTotalProfitLoss();
+        }
+
+        function updateTotalProfitLoss() {
+            let totalValue = parseFloat(valueElement.innerText) + parseFloat(holdingValueElement.innerText);
+            let totalProfitLoss = (totalValue - 10000).toFixed(2);
+            totalProfitLossElement.innerText = totalProfitLoss;
+            totalProfitLossElement.style.color = totalProfitLoss >= 0 ? "#FF0000" : "#009900";
+            totalProfitLossElement.style.fontWeight = "bold"; // 加粗显示
+        }
+
+        function updatePriceBlinking() {
+            let currentPrice = parseFloat(priceElement.innerText);
+            let previousPrice = parseFloat(sequence[sequence.length - 2][1]);
+            if (currentPrice > previousPrice) {
+                priceElement.style.backgroundColor = "#FFE5E5"; // 浅红色
+                setTimeout(function () {
+                    priceElement.style.backgroundColor = "";
+                }, 500);
+            } else if (currentPrice < previousPrice) {
+                priceElement.style.backgroundColor = "#E5FFE5"; // 浅绿色
+                setTimeout(function () {
+                    priceElement.style.backgroundColor = "";
+                }, 500);
+            }
+        }
+
+        // 更新每日股价
+        function delayIncr() {
+            let r = Math.random();
+            let mode = document.getElementById("mode").value;
+
+            // 只有在非新手模式的非异动周期内才可能触发随机新闻事件
+            if (mode == "advanced" && r < 0.08 && AbnormalfluctuationDays <= 0) {
+                updateNews();
+            }
+            if (mode == "doomsday" && r < 0.15 && AbnormalfluctuationDays <= 0) {
+                updateNews();
+            }
+            let len = sequence.length;
+            let lastClose = sequence[len - 1][1];
+            for (let i = 0; i < generate; i++) {
+                let fluctuation = 1;
+                if (AbnormalfluctuationDays > 0) {
+                    AbnormalfluctuationDays -= 1;
+                    fluctuation = Abnormalfluctuation;
+                }
+                let open = lastClose;
+                let close = Math.max(normalDistribution(open * fluctuation, stdDeviation * open), 0.1);
+                let dailyChangePercentage = (close - open) / open;
+                if (Math.abs(dailyChangePercentage) > dailyFluctuationLimit) {
+                    if (dailyChangePercentage > 0) {
+                        close = open * (1 + dailyFluctuationLimit);
+                        let warning = "XXXX今日涨停。";
+                        AddNews(warning.replace("XXXX", "<span class='company-name'>" + companyName + "</span>"));
+                    } else {
+                        close = open * (1 - dailyFluctuationLimit);
+                        let warning = "XXXX今日跌停。";
+                        AddNews(warning.replace("XXXX", "<span class='company-name'>" + companyName + "</span>"));
+                    }
+                }
+                let high = Math.max(Math.max(open, close) + normalDistribution(0, 0.5 * stdDeviation * open), Math.max(open, close));
+                let low = Math.min(Math.min(open, close) - normalDistribution(0, 0.5 * stdDeviation * open), Math.min(open, close));
+                sequence.push([open, close, high, low]);
+                sequence.shift();
+                lastClose = close;
+            }
+            checkDelisting(sequence);
+            drawCandlestickChart(element, context2d, canvaswidth, canvasheight, sequence);
+            priceElement.innerText = sequence[len - 1][1].toFixed(2);
+            updateHoldingValue();
+            updatePriceBlinking(); // 实时价格变化时的背景颜色闪烁效果
+        }
+
+        drawCandlestickChart(element, context2d, canvaswidth, canvasheight, sequence);
+
+        var modal = document.getElementById("myModal"); // 获取弹窗元素        
+        var span = document.getElementsByClassName("close")[0]; // 获取 <span> 元素，关闭弹窗
+        // 页面加载完成后打开弹窗        
+        window.onload = function () {
+            modal.style.display = "block";
+        };
+        // 当点击开始游戏, 关闭弹窗
+        span.onclick = function () {
+            modal.style.display = "none";
+            var companyName = prompt("请自定义您的股票名称：", "XXXX");
+            let welcome = "XXXX于近日在上交所正式挂牌上市，上市股票发行价格为249元/股，净募集资金约4.925亿人民币。";
+            AddNews(welcome.replace("XXXX", "<span class='company-name'>" + companyName + "</span>"));
+            var updateInterval = setInterval(delayIncr, delayTime);
+        };
+        // 当点击窗口外部时，关闭弹窗
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+                var companyName = prompt("请自定义您的股票名称：", "XXXX");
+                let welcome = "XXXX于近日在上交所正式挂牌上市，上市股票发行价格为249元/股，净募集资金约4.925亿人民币。";
+                AddNews(welcome.replace("XXXX", "<span class='company-name'>" + companyName + "</span>"));
+                var updateInterval = setInterval(delayIncr, delayTime);
+            }
+        };        
+    </script>
+</body>
+
+</html>
